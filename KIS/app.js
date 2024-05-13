@@ -4,7 +4,7 @@ const { getAllSpecifications, getSpecificationById, createSpecification, updateS
 const { getAllOrders, getOrderById, createOrder, updateOrder, deleteOrder} = require('./Controllers/order');
 
 const app = express();
-const port = 3000;
+const port = 5000;
 
 app.use(express.json());
 

@@ -11,6 +11,7 @@ function connectToDatabase() {
             }
             console.log('Подключение к БД...');
             resolve(conn);
+            
         });
     });
 }
