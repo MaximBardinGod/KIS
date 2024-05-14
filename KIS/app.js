@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const { getAllStocks, getStockById, createStock, updateStock, deleteStock } = require('./Controllers/stock');
 const { getAllSpecifications, getSpecificationById, createSpecification, updateSpecification, deleteSpecification} = require('./Controllers/Specifications');
 const { getAllOrders, getOrderById, createOrder, updateOrder, deleteOrder} = require('./Controllers/order');
@@ -6,25 +7,26 @@ const { getAllOrders, getOrderById, createOrder, updateOrder, deleteOrder} = req
 const app = express();
 const port = 5000;
 
+app.use(cors());
 app.use(express.json());
 
-app.get('/specifications', getAllSpecifications);
-app.get('/specifications/:id', getSpecificationById);
-app.post('/specifications', createSpecification);
-app.put('/specifications', updateSpecification);
-app.delete('/specifications/:id', deleteSpecification);
+app.get('/get/specifications', getAllSpecifications);
+app.get('/get/specifications/:id', getSpecificationById);
+app.post('/post/specifications', createSpecification);
+app.put('/put/specifications', updateSpecification);
+app.delete('/delete/specifications/:id', deleteSpecification);
 
-app.get('/orders', getAllOrders);
-app.get('/orders/:id', getOrderById);
-app.post('/orders', createOrder);
-app.put('/orders', updateOrder);
-app.delete('/orders/:id', deleteOrder);
+app.get('/get/orders', getAllOrders);
+app.get('/get/orders/:id', getOrderById);
+app.post('/post/orders', createOrder);
+app.put('/put/orders', updateOrder);
+app.delete('/delete/orders/:id', deleteOrder);
 
-app.get('/stocks', getAllStocks);
-app.get('/stocks/:id', getStockById);
-app.post('/stocks', createStock);
-app.put('/stocks', updateStock);
-app.delete('/stocks/:id', deleteStock);
+app.get('/get/stocks', getAllStocks);
+app.get('/get/stocks/:id', getStockById);
+app.post('/post/stocks', createStock);
+app.put('/put/stocks', updateStock);
+app.delete('/delete/stocks/:id', deleteStock);
 
 app.listen(port, () => {
     console.log(`Сервер запущен! Адрес сервера:http://localhost:${port}`);
