@@ -66,7 +66,19 @@ async function deleteSpecification(req, res) {
     const { id } = req.params;
     try {
         const conn = await connectToDatabase();
-        const sql = `DELETE FROM Specification WHERE Id = ?`;
+        const sql = `WITH RecursiveDelete AS (
+            SELECT Id
+            FROM specification
+            WHERE Id = ?
+            
+            UNION ALL
+            
+            SELECT t.Id
+            FROM specification t
+            INNER JOIN RecursiveDelete rd ON t.ParentId = rd.Id
+            )
+            DELETE FROM specification
+            WHERE Id IN (SELECT Id FROM RecursiveDelete);`;
         conn.query(sql, [id], (err, result) => {
             if (err) throw err;
             res.send('Specification deleted successfully!');

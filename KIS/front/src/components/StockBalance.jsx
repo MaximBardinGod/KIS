@@ -36,9 +36,9 @@ const StockBalance = ({ date }) => {
         </thead>
         <tbody>
           {stockBalances.map(stock => (
-            <tr key={stock.SpecificationId}>
-              <td>{stock.SpecificationId}</td>
-              <td>{stock.RemainingStock}</td>
+            <tr key={stock.Description}>
+              <td>{stock.Description}</td>
+              <td>{stock.TotalQuantity}</td>
             </tr>
           ))}
         </tbody>

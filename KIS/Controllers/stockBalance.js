@@ -8,15 +8,13 @@ async function getStockBalance(req, res) {
     }
 
     const sqlQuery = `
-        SELECT 
-            SpecificationId,
-            SUM(Receivedquantity) - SUM(Shippedquantity) AS RemainingStock
-        FROM 
-            Stock
-        WHERE 
-            Dateoperation <= ?
-        GROUP BY 
-            SpecificationId;
+    SELECT 
+        Specification.Description, SUM(Receivedquantity) - SUM(Shippedquantity) AS TotalQuantity 
+    FROM
+        Stock INNER JOIN Specification ON Specification.id = Stock.SpecificationId 
+        WHERE Dateoperation <= CAST(? AS DATE) 
+    GROUP BY
+        Description
     `;
 
     try {
