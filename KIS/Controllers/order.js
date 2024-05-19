@@ -28,7 +28,7 @@ async function getOrderById(req, res) {
 async function createOrder(req, res) {
     const { SpecificationId, OrderDate, Status, ClientName, Count } = req.body;
     try {
-        console.log('Parameters:', SpecificationId, OrderDate, Status, ClientName, Count); // Добавляем лог параметров
+        console.log('Parameters:', SpecificationId, OrderDate, Status, ClientName, Count);
         const conn = await connectToDatabase();
         const sql = `INSERT INTO Order_ (SpecificationId, OrderDate, Status, ClientName, Count) VALUES (?, ?, ?, ?, ?)`;
         conn.query(sql, [SpecificationId, OrderDate, Status, ClientName, Count], (err, result) => {
@@ -44,7 +44,7 @@ async function createOrder(req, res) {
 
 
 async function updateOrder(req, res) {
-    const { Id, SpecificationId, Orderdate, Status, ClientName, Count } = req.body; // Заменили Id на ID
+    const { Id, SpecificationId, Orderdate, Status, ClientName, Count } = req.body;
     try {
         console.log('Parameters:', Id, SpecificationId, Orderdate, Status, ClientName, Count);
         const conn = await connectToDatabase();

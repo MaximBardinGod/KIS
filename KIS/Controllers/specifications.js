@@ -28,28 +28,37 @@ async function getSpecificationById(req, res) {
 async function createSpecification(req, res) {
     const { ParentId, Description, QuantityPerParent, Measure } = req.body;
     try {
+        console.log('Parameters:', ParentId, Description, QuantityPerParent, Measure);
         const conn = await connectToDatabase();
-        const sql = `INSERT INTO Specification (ParentId, Description, QuantityPerParent, Measure) VALUES (?, ?, ?, ?)`;
+        const sql = `INSERT INTO Specification ( ParentId, Description, QuantityPerParent, Measure) VALUES ( ?, ?, ?, ?)`;
         conn.query(sql, [ParentId, Description, QuantityPerParent, Measure], (err, result) => {
             if (err) throw err;
-            res.send('Specification added successfully!');
+            res.send('Specification created successfully!');
+            console.log('Specification created successfully!');
         });
     } catch (error) {
-        res.status(500).send('Failed to create data: ' + error.message);
+        res.status(500).send('Failed to create Specification: ' + error.message);
     }
 }
+
+
 
 async function updateSpecification(req, res) {
     const { Id, ParentId, Description, QuantityPerParent, Measure } = req.body;
     try {
+        console.log('Parameters:', Id, ParentId, Description, QuantityPerParent, Measure);
         const conn = await connectToDatabase();
         const sql = `UPDATE Specification SET ParentId = ?, Description = ?, QuantityPerParent = ?, Measure = ? WHERE Id = ?`;
         conn.query(sql, [ParentId, Description, QuantityPerParent, Measure, Id], (err, result) => {
-            if (err) throw err;
-            res.send('Specification updated successfully!');
+            if (err) {
+                console.error('Failed to execute SQL query:', err);
+                return res.status(500).send('Failed to update Specification');
+            }
+            return res.send('Specification updated successfully!');
         });
     } catch (error) {
-        res.status(500).send('Failed to update data: ' + error.message);
+        console.error('Error:', error);
+        return res.status(500).send('Failed to update Specification');
     }
 }
 

@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const CreateOrderForm = () => {
+const CreateSpecificationForm = () => {
   const [formData, setFormData] = useState({
-    SpecificationId: '',
-    OrderDate: '',
-    ClientName: '',
-    Count: '',
-    Status: 'не выполнено'
+    ParentId: '',
+    Description: '',
+    QuantityPerParent: '',
+    Measure: ''
   });
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,54 +23,54 @@ const CreateOrderForm = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await axios.post('http://localhost:5000/post/orders', formData);
-      console.log('Order created successfully!');
+      await axios.post('http://localhost:5000/post/specifications', formData);
+      console.log('Specification created successfully!');
     } catch (error) {
-      console.error('Failed to create order:', error);
+      console.error('Failed to create specification:', error);
     } finally {
       setIsSubmitting(false);
-      setIsFormVisible(false); 
+      setIsFormVisible(false);
     }
   };
 
   return (
     <div>
-      <button onClick={() => setIsFormVisible(true)}>Создать заказ</button>
+      <button onClick={() => setIsFormVisible(true)}>Добавить спецификацию</button>
       {isFormVisible && (
         <form onSubmit={handleSubmit}>
-          <label htmlFor="SpecificationId">SpecificationId:</label>
+          <label htmlFor="ParentId">ParentId:</label>
           <input
             type="number"
-            id="SpecificationId"
-            name="SpecificationId"
-            value={formData.SpecificationId}
+            id="ParentId"
+            name="ParentId"
+            value={formData.ParentId}
             onChange={handleChange}
             required
           />
-          <label htmlFor="OrderDate">Дата заказа:</label>
-          <input
-            type="date"
-            id="OrderDate"
-            name="OrderDate"
-            value={formData.OrderDate}
-            onChange={handleChange}
-            required
-          />
-          <label htmlFor="ClientName">Имя клиента:</label>
+          <label htmlFor="Description">Description:</label>
           <input
             type="text"
-            id="ClientName"
-            name="ClientName"
-            value={formData.ClientName}
+            id="Description"
+            name="Description"
+            value={formData.Description}
             onChange={handleChange}
             required
           />
-          <label htmlFor="Count">Количество:</label>
+          <label htmlFor="QuantityPerParent">QuantityPerParent:</label>
           <input
             type="number"
-            id="Count"
-            name="Count"
-            value={formData.Count}
+            id="QuantityPerParent"
+            name="QuantityPerParent"
+            value={formData.QuantityPerParent}
+            onChange={handleChange}
+            required
+          />
+          <label htmlFor="Measure">Measure:</label>
+          <input
+            type="text"
+            id="Measure"
+            name="Measure"
+            value={formData.Measure}
             onChange={handleChange}
             required
           />
@@ -84,4 +83,4 @@ const CreateOrderForm = () => {
   );
 };
 
-export default CreateOrderForm;
+export default CreateSpecificationForm;

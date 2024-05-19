@@ -26,30 +26,39 @@ async function getStockById(req, res) {
 }
 
 async function createStock(req, res) {
-    const { SpecificationId, ReceivedQuantity, ShippedQuantity, DateOperation } = req.body;
+    const { SpecificationId, Receivedquantity, Shippedquantity, Dateoperation } = req.body;
     try {
+        console.log('Parameters:', SpecificationId, Receivedquantity, Shippedquantity, Dateoperation);
         const conn = await connectToDatabase();
-        const sql = `INSERT INTO Stock (SpecificationId, ReceivedQuantity, ShippedQuantity, DateOperation) VALUES (?, ?, ?, ?)`;
-        conn.query(sql, [SpecificationId, ReceivedQuantity, ShippedQuantity, DateOperation], (err, result) => {
+        const sql = `INSERT INTO Stock ( SpecificationId, Receivedquantity, Shippedquantity, Dateoperation) VALUES ( ?, ?, ?, ?)`;
+        conn.query(sql, [SpecificationId, Receivedquantity, Shippedquantity, Dateoperation], (err, result) => {
             if (err) throw err;
-            res.send('Stock entry created successfully!');
+            res.send('Stock created successfully!');
+            console.log('Stock created successfully!');
         });
     } catch (error) {
-        res.status(500).send('Failed to create stock entry: ' + error.message);
+        res.status(500).send('Failed to create Stock: ' + error.message);
     }
 }
 
+
+
 async function updateStock(req, res) {
-    const { Id, SpecificationId, ReceivedQuantity, ShippedQuantity, DateOperation } = req.body;
+    const { Id, SpecificationId, Receivedquantity, Shippedquantity, Dateoperation } = req.body;
     try {
+        console.log('Parameters:', Id, SpecificationId, Receivedquantity, Shippedquantity, Dateoperation);
         const conn = await connectToDatabase();
-        const sql = `UPDATE Stock SET SpecificationId = ?, ReceivedQuantity = ?, ShippedQuantity = ?, DateOperation = ? WHERE Id = ?`;
-        conn.query(sql, [SpecificationId, ReceivedQuantity, ShippedQuantity, DateOperation, Id], (err, result) => {
-            if (err) throw err;
-            res.send('Stock entry updated successfully!');
+        const sql = `UPDATE Stock SET SpecificationId = ?, Receivedquantity = ?, Shippedquantity = ?, Dateoperation = ? WHERE Id = ?`;
+        conn.query(sql, [SpecificationId, Receivedquantity, Shippedquantity, Dateoperation, Id], (err, result) => {
+            if (err) {
+                console.error('Failed to execute SQL query:', err);
+                return res.status(500).send('Failed to update Stock');
+            }
+            return res.send('Stock updated successfully!');
         });
     } catch (error) {
-        res.status(500).send('Failed to update stock entry: ' + error.message);
+        console.error('Error:', error);
+        return res.status(500).send('Failed to update Stock');
     }
 }
 

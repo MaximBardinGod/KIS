@@ -28,6 +28,8 @@ app.post('/post/stocks', createStock);
 app.put('/put/stocks', updateStock);
 app.delete('/delete/stocks/:id', deleteStock);
 
+app.get('/get/stockBalance', getStockBalance);
+
 app.listen(port, () => {
     console.log(`Сервер запущен! Адрес сервера:http://localhost:${port}`);
 });
