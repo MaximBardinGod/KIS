@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import CreateSpecificationForm from './CreateSpecificationForm';
+import BreakdownModal from './BreakdownModal';
 
 const Specifications = () => {
   const [specifications, setSpecifications] = useState([]);
@@ -8,6 +9,9 @@ const Specifications = () => {
   const [error, setError] = useState('');
   const [selectedSpecification, setSelectedSpecification] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBreakdownModalOpen, setIsBreakdownModalOpen] = useState(false);  
+  const [breakdownData, setBreakdownData] = useState([]);
+
   const [formData, setFormData] = useState({
     ParentId: '',
     Description: '',
@@ -55,6 +59,10 @@ const Specifications = () => {
     setIsModalOpen(false);
   };
 
+  const handleBreakdownModalClose = () => {
+    setIsBreakdownModalOpen(false);
+  };
+
   const handleModalSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -88,6 +96,16 @@ const Specifications = () => {
     }));
   };
 
+  const handleBreakdown = async (id) => {
+    try {
+      const response = await axios.get(`http://localhost:5000/get/specificationBreakdown/${id}`);
+      setBreakdownData(response.data);
+      setIsBreakdownModalOpen(true);
+    } catch (error) {
+      setError('Ошибка при разложении спецификации: ' + error.message);
+    }
+  };
+
   if (isLoading) return <div>Загрузка...</div>;
 
   return (
@@ -117,6 +135,7 @@ const Specifications = () => {
                 <td>
                   <button onClick={() => handleDeleteSpecification(specification.Id)}>Удалить</button>
                   <button onClick={() => handleUpdateSpecification(specification)}>Обновить</button>
+                  <button onClick={() => handleBreakdown(specification.Id)}>Разложить</button>
                 </td>
               </tr>
             ))}
@@ -178,6 +197,12 @@ const Specifications = () => {
             </form>
           </div>
         </div>
+      )}
+      {isBreakdownModalOpen && (
+        <BreakdownModal
+          breakdownData={breakdownData}
+          onClose={handleBreakdownModalClose}
+        />
       )}
     </div>
   );
