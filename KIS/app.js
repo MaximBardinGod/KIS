@@ -5,6 +5,8 @@ const { getAllSpecifications, getSpecificationById, createSpecification, updateS
 const { getAllOrders, getOrderById, createOrder, updateOrder, deleteOrder} = require('./Controllers/order');
 const { getStockBalance} = require('./Controllers/stockBalance');
 const { getSpecificationBreakdown } = require('./Controllers/specificationBreakdown');
+const { getStocksBreakdown } = require('./Controllers/stocksBreakdown');
+
 
 const app = express();
 const port = 5000;
@@ -33,6 +35,9 @@ app.delete('/delete/stocks/:id', deleteStock);
 app.get('/get/stockBalance', getStockBalance);
 
 app.get('/get/specificationBreakdown/:id', getSpecificationBreakdown);
+
+app.get('/get/stockBreakdown', getStocksBreakdown);
+
 
 app.listen(port, () => {
     console.log(`Сервер запущен! Адрес сервера:http://localhost:${port}`);

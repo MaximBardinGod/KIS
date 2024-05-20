@@ -3,6 +3,7 @@ import axios from 'axios';
 import CreateStockForm from './CreateStockForm';
 import StockBalance from './StockBalance';
 
+
 const Stocks = () => {
   const [stocks, setStocks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
