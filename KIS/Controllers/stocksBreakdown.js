@@ -4,48 +4,58 @@ async function getStocksBreakdown(req, res) {
   const { id } = req.params;
   
   const sqlQuery = `
-  DECLARE @DateOperation DATE = CAST( ? AS DATE);
+  DECLARE @DateOperation DATE = CAST('2024-05-14' AS DATE); 
 
-  WITH Qty AS (
+    WITH InitialStock AS (
     SELECT
-      SpecificationId AS Id,
-      SUM(Receivedquantity) - SUM(Shippedquantity) AS TotalQuantity
+        SpecificationId,
+        SUM(Receivedquantity) - SUM(Shippedquantity) AS TotalQuantity
     FROM Stock
     WHERE Dateoperation <= @DateOperation
     GROUP BY SpecificationId
-  ),
-  RecursiveComponents AS (
+),
+RecursiveComponents AS (
     SELECT
-      s.Id,
-      s.ParentId,
-      s.Description,
-      CAST(COALESCE(st.TotalQuantity, 0) AS FLOAT) AS TotalQuantity,
-      CASE 
-        WHEN EXISTS(SELECT 1 FROM Specification WHERE ParentId = s.Id) THEN 0 
-        ELSE 1 
-      END AS IsLeaf
+        s.Id,
+        s.ParentId,
+        s.Description,
+        s.Measure,
+        CAST(ISNULL(st.TotalQuantity, 0) AS FLOAT) AS TotalQuantity,
+        CASE 
+            WHEN EXISTS(SELECT 1 FROM Specification WHERE ParentId = s.Id) THEN 0 
+            ELSE 1 
+        END AS IsLeaf
     FROM Specification s
-    LEFT JOIN Qty st ON s.Id = st.Id
-  
+    LEFT JOIN InitialStock st ON s.Id = st.SpecificationId
+
     UNION ALL
-  
+
     SELECT
-      s.Id,
-      s.ParentId,
-      s.Description,
-      CAST(rc.TotalQuantity * s.QuantityPerParent AS FLOAT) AS TotalQuantity,
-      rc.IsLeaf
+        s.Id,
+        s.ParentId,
+        s.Description,
+        s.Measure,
+        CAST(rc.TotalQuantity * s.QuantityPerParent AS FLOAT) AS TotalQuantity,
+        rc.IsLeaf
     FROM Specification s
     INNER JOIN RecursiveComponents rc ON s.ParentId = rc.Id
-  )
-  SELECT
-    Id,
-    Description,
-    TotalQuantity
-  FROM RecursiveComponents
-  WHERE TotalQuantity > 0 AND IsLeaf = 1
-  ORDER BY Id
-  OPTION (MAXRECURSION 0);
+),
+AggregatedComponents AS (
+    SELECT
+        Id,
+        Description,
+        Measure,
+        SUM(TotalQuantity) AS TotalQuantity,
+        MAX(IsLeaf) AS IsLeaf
+    FROM RecursiveComponents
+    GROUP BY Id, Description, Measure
+)
+SELECT Id, Description AS Description1, Measure, TotalQuantity AS TotalQuantity1
+FROM AggregatedComponents
+WHERE TotalQuantity > 0 AND IsLeaf = 1
+ORDER BY Id
+OPTION (MAXRECURSION 0);
+
   
   `;
 
