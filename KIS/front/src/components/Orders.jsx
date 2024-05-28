@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import CreateOrderForm from './CreateOrderForm';
+import DeficitCalculator from './DeficitCalculator';
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -15,6 +16,11 @@ const Orders = () => {
     Count: '',
     Status: ''
   });
+
+  const [orderBreakdown, setOrderBreakdown] = useState([]);
+  const [breakdownDate, setBreakdownDate] = useState('');
+
+  const [dateForCalculation, setDateForCalculation] = useState('');
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -43,8 +49,8 @@ const Orders = () => {
   const handleUpdateOrder = (order) => {
     setSelectedOrder(order);
     setFormData({
-      Id:order.Id,
-      SpecificationId:order.SpecificationId,
+      Id: order.Id,
+      SpecificationId: order.SpecificationId,
       Orderdate: new Date(order.Orderdate).toISOString().split('T')[0],
       ClientName: order.ClientName,
       Count: order.Count,
@@ -58,12 +64,10 @@ const Orders = () => {
     setIsModalOpen(false);
   };
 
-  
-
   const handleModalSubmit = async () => {
     try {
       const data = {
-        Id: selectedOrder.Id, // Включаем Id заказа в данные
+        Id: selectedOrder.Id,
         SpecificationId: formData.SpecificationId,
         Orderdate: formData.Orderdate,
         Status: formData.Status,
@@ -90,7 +94,26 @@ const Orders = () => {
       ...prevState,
       [name]: value
     }));
-  };  
+  };
+
+  const handleBreakdownChange = (e) => {
+    setBreakdownDate(e.target.value);
+  };
+
+  const handleGetBreakdown = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/get/orderBreakdown`, {
+        params: { date: breakdownDate }
+      });
+      setOrderBreakdown(response.data);
+    } catch (error) {
+      setError('Ошибка при получении данных разбивки: ' + error.message);
+    }
+  };
+
+  const handleDateChange = (e) => {
+    setDateForCalculation(e.target.value);
+  };
 
   if (isLoading) return <div>Загрузка...</div>;
 
@@ -99,36 +122,60 @@ const Orders = () => {
       <h1>Заказы</h1>
       {error && <p className="error">{error}</p>}
       <div>
-      <table>
-        <thead>
-          <tr>
-            <th>ID заказа</th>
-            <th>ID спецификации</th> 
-            <th>Дата заказа</th>
-            <th>Имя клиента</th>
-            <th>Количество</th>
-            <th>Статус</th>
-            <th>Действия</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orders.map(order => (
-            <tr key={order.Id}>
-              <td>{order.Id}</td>
-              <td>{order.SpecificationId}</td>
-              <td>{new Date(order.Orderdate).toISOString().split('T')[0]}</td>
-              <td>{order.ClientName}</td>
-              <td>{order.Count}</td>
-              <td>{order.Status}</td>
-              <td>
-                <button onClick={() => handleDeleteOrder(order.Id)}>Удалить</button>
-                <button onClick={() => handleUpdateOrder(order)}>Обновить</button>
-              </td>
+        <div>
+          <label htmlFor="breakdownDate">Выберите дату:</label>
+          <input
+            type="date"
+            id="breakdownDate"
+            name="breakdownDate"
+            value={breakdownDate}
+            onChange={handleBreakdownChange}
+          />
+          <button onClick={handleGetBreakdown}>Разложить</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>ID заказа</th>
+              <th>ID спецификации</th>
+              <th>Дата заказа</th>
+              <th>Имя клиента</th>
+              <th>Количество</th>
+              <th>Статус</th>
+              <th>Действия</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      <CreateOrderForm />
+          </thead>
+          <tbody>
+            {orders.map(order => (
+              <tr key={order.Id}>
+                <td>{order.Id}</td>
+                <td>{order.SpecificationId}</td>
+                <td>{new Date(order.Orderdate).toISOString().split('T')[0]}</td>
+                <td>{order.ClientName}</td>
+                <td>{order.Count}</td>
+                <td>{order.Status}</td>
+                <td>
+                  <button onClick={() => handleDeleteOrder(order.Id)}>Удалить</button>
+                  <button onClick={() => handleUpdateOrder(order)}>Обновить</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <CreateOrderForm />
+        <div>
+        <div>
+        <label htmlFor="calculationDate">Выберите дату для расчета дефицита:</label>
+        <input
+          type="date"
+          id="calculationDate"
+          name="calculationDate"
+          value={dateForCalculation}
+          onChange={handleDateChange}
+        />
+      </div>
+      <DeficitCalculator dateForCalculation={dateForCalculation} />
+    </div>
       </div>
       {isModalOpen && (
         <div className="modal">
@@ -136,19 +183,19 @@ const Orders = () => {
             <span className="close" onClick={handleModalClose}>&times;</span>
             <h2>Обновление заказа</h2>
             <form onSubmit={handleModalSubmit}>
-            <div>
-          <label htmlFor="Id">ID заказа:</label>
-          <input
-            type="number"
-            id="Id"
-            name="Id"
-            value={selectedOrder.Id} // Показываем текущее значение Id
-            onChange={handleChange} // Можете добавить возможность изменения Id, если это нужно
-            required
-                   disabled
+              <div>
+                <label htmlFor="Id">ID заказа:</label>
+                <input
+                  type="number"
+                  id="Id"
+                  name="Id"
+                  value={selectedOrder.Id}
+                  onChange={handleChange}
+                  required
+                  disabled
                 />
-                </div>
-                <div>
+              </div>
+              <div>
                 <label htmlFor="SpecificationId">SpecificationId:</label>
                 <input
                   type="number"
@@ -208,6 +255,27 @@ const Orders = () => {
           </div>
         </div>
       )}
+      <h2>Разложенные заказы</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID спецификации</th>
+            <th>Описание</th>
+            <th>Единица измерения</th>
+            <th>Общее количество</th>
+          </tr>
+        </thead>
+        <tbody>
+          {orderBreakdown.map(item => (
+            <tr key={item.Id}>
+              <td>{item.Id}</td>
+              <td>{item.Description1}</td>
+              <td>{item.Measure}</td>
+              <td>{item.TotalQuantity1}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

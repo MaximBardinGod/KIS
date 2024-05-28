@@ -6,6 +6,7 @@ const { getAllOrders, getOrderById, createOrder, updateOrder, deleteOrder} = req
 const { getStockBalance} = require('./Controllers/stockBalance');
 const { getSpecificationBreakdown } = require('./Controllers/specificationBreakdown');
 const { getStocksBreakdown } = require('./Controllers/stocksBreakdown');
+const { getOrderBreakdown } = require('./Controllers/orderBreakdown');
 
 
 const app = express();
@@ -38,6 +39,7 @@ app.get('/get/specificationBreakdown/:id', getSpecificationBreakdown);
 
 app.get('/get/stockBreakdown', getStocksBreakdown);
 
+app.get('/get/orderBreakdown', getOrderBreakdown);
 
 app.listen(port, () => {
     console.log(`Сервер запущен! Адрес сервера:http://localhost:${port}`);

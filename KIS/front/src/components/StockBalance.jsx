@@ -76,7 +76,7 @@ const StockBalance = ({ date }) => {
             <table>
               <thead>
                 <tr>
-                  <th>ID Спецификации</th>
+                  <th>ID</th>
                   <th>Описание</th>
                   <th>Общее количество</th>
                 </tr>
@@ -85,8 +85,8 @@ const StockBalance = ({ date }) => {
                 {decomposition.map(item => (
                   <tr key={item.Id}>
                     <td>{item.Id}</td>
-                    <td>{item.Description}</td>
-                    <td>{item.TotalQuantity}</td>
+                    <td>{item.Description1}</td>
+                    <td>{item.TotalQuantity1}</td>
                   </tr>
                 ))}
               </tbody>
