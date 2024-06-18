@@ -1,91 +1,81 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import CreateOrderForm from './CreateOrderForm';
-import DeficitCalculator from './DeficitCalculator';
+import Table from 'react-bootstrap/Table';
+import Modal from 'react-bootstrap/Modal';
+import Button from 'react-bootstrap/Button';
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [showProductSelection, setShowProductSelection] = useState(false);
   const [formData, setFormData] = useState({
-    SpecificationId: '',
-    Orderdate: '',
-    ClientName: '',
-    Count: '',
-    Status: ''
+    Description: '',
+    Date: ''
   });
-
-  const [orderBreakdown, setOrderBreakdown] = useState([]);
-  const [breakdownDate, setBreakdownDate] = useState('');
-
-  const [dateForCalculation, setDateForCalculation] = useState('');
+  const [orderItems, setOrderItems] = useState([]);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/get/orders');
-        setOrders(response.data);
-      } catch (error) {
-        setError('Ошибка при получении данных: ' + error.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchOrders();
+    fetchProducts();
   }, []);
+
+  const fetchOrders = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/get/orders');
+      setOrders(response.data);
+    } catch (error) {
+      setError('Ошибка при получении данных: ' + error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/get/products');
+      setProducts(response.data);
+    } catch (error) {
+      setError('Ошибка при получении данных: ' + error.message);
+    }
+  };
+
+  const fetchOrderItems = async (orderId) => {
+    try {
+      const response = await axios.get(`http://localhost:5000/get/itemorder/${orderId}`);
+      setOrderItems(response.data);
+      setIsItemModalOpen(true);
+    } catch (error) {
+      setError('Ошибка при получении данных: ' + error.message);
+    }
+  };
 
   const handleDeleteOrder = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/delete/orders/${id}`);
+      await axios.delete(`http://localhost:5000/delete/order/${id}`);
       setOrders(orders.filter(order => order.Id !== id));
     } catch (error) {
       setError('Ошибка при удалении заказа: ' + error.message);
     }
   };
 
-  const handleUpdateOrder = (order) => {
-    setSelectedOrder(order);
-    setFormData({
-      Id: order.Id,
-      SpecificationId: order.SpecificationId,
-      Orderdate: new Date(order.Orderdate).toISOString().split('T')[0],
-      ClientName: order.ClientName,
-      Count: order.Count,
-      Status: order.Status
-    });
+  const handleCreateOrder = () => {
     setIsModalOpen(true);
   };
 
   const handleModalClose = () => {
-    setSelectedOrder(null);
     setIsModalOpen(false);
+    setShowProductSelection(false);
+    setSelectedProducts([]);
   };
 
-  const handleModalSubmit = async () => {
-    try {
-      const data = {
-        Id: selectedOrder.Id,
-        SpecificationId: formData.SpecificationId,
-        Orderdate: formData.Orderdate,
-        Status: formData.Status,
-        ClientName: formData.ClientName,
-        Count: formData.Count
-      };
-      await axios.put(`http://localhost:5000/put/orders`, data);
-      const updatedOrders = orders.map(order => {
-        if (order.Id === selectedOrder.Id) {
-          return { ...order, ...formData };
-        }
-        return order;
-      });
-      setOrders(updatedOrders);
-      setIsModalOpen(false);
-    } catch (error) {
-      setError('Ошибка при обновлении заказа: ' + error.message);
-    }
+  const handleItemModalClose = () => {
+    setIsItemModalOpen(false);
   };
 
   const handleChange = (e) => {
@@ -96,23 +86,49 @@ const Orders = () => {
     }));
   };
 
-  const handleBreakdownChange = (e) => {
-    setBreakdownDate(e.target.value);
+  const handleProductSelectChange = (productId, count) => {
+    setSelectedProducts(prevState => {
+      const existingProduct = prevState.find(p => p.ProductId === productId);
+      if (existingProduct) {
+        return prevState.map(p =>
+          p.ProductId === productId ? { ...p, Count: count } : p
+        );
+      } else {
+        return [...prevState, { ProductId: productId, Count: count }];
+      }
+    });
   };
 
-  const handleGetBreakdown = async () => {
-    try {
-      const response = await axios.get(`http://localhost:5000/get/orderBreakdown`, {
-        params: { date: breakdownDate }
-      });
-      setOrderBreakdown(response.data);
-    } catch (error) {
-      setError('Ошибка при получении данных разбивки: ' + error.message);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const date = new Date(formData.Date);
+    if (isNaN(date.getTime())) {
+      setError('Invalid date');
+      return;
     }
-  };
+    try {
+      // Create the order
+      await axios.post('http://localhost:5000/post/order', formData);
+      
+      // Fetch the latest orders to get the last order ID
+      const response = await axios.get('http://localhost:5000/get/orders');
+      const latestOrders = response.data;
+      const lastOrderId = latestOrders[latestOrders.length - 1].Id;
 
-  const handleDateChange = (e) => {
-    setDateForCalculation(e.target.value);
+      // Create ItemOrder entries with the last order ID
+      await Promise.all(selectedProducts.map(product =>
+        axios.post('http://localhost:5000/post/itemorder', {
+          OrderId: lastOrderId,
+          ProductId: product.ProductId,
+          Count: product.Count
+        })
+      ));
+      
+      fetchOrders(); // Refresh the orders list
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Error creating order:', error.message);
+    }
   };
 
   if (isLoading) return <div>Загрузка...</div>;
@@ -120,28 +136,15 @@ const Orders = () => {
   return (
     <div>
       <h1>Заказы</h1>
+      <Button onClick={handleCreateOrder}>Создать заказ</Button>
       {error && <p className="error">{error}</p>}
       <div>
-        <div>
-          <label htmlFor="breakdownDate">Выберите дату:</label>
-          <input
-            type="date"
-            id="breakdownDate"
-            name="breakdownDate"
-            value={breakdownDate}
-            onChange={handleBreakdownChange}
-          />
-          <button onClick={handleGetBreakdown}>Разложить</button>
-        </div>
-        <table>
+        <Table>
           <thead>
             <tr>
               <th>ID заказа</th>
-              <th>ID спецификации</th>
-              <th>Дата заказа</th>
-              <th>Имя клиента</th>
-              <th>Количество</th>
-              <th>Статус</th>
+              <th>Description</th>
+              <th>Дата</th>
               <th>Действия</th>
             </tr>
           </thead>
@@ -149,133 +152,103 @@ const Orders = () => {
             {orders.map(order => (
               <tr key={order.Id}>
                 <td>{order.Id}</td>
-                <td>{order.SpecificationId}</td>
-                <td>{new Date(order.Orderdate).toISOString().split('T')[0]}</td>
-                <td>{order.ClientName}</td>
-                <td>{order.Count}</td>
-                <td>{order.Status}</td>
+                <td>{order.Description}</td>
+                <td>{new Date(order.Date).toLocaleDateString()}</td>
                 <td>
                   <button onClick={() => handleDeleteOrder(order.Id)}>Удалить</button>
-                  <button onClick={() => handleUpdateOrder(order)}>Обновить</button>
+                  <button onClick={() => fetchOrderItems(order.Id)}>Посмотреть содержимое</button>
                 </td>
               </tr>
             ))}
           </tbody>
-        </table>
-        <CreateOrderForm />
-        <div>
-        <div>
-        <label htmlFor="calculationDate">Выберите дату для расчета дефицита:</label>
-        <input
-          type="date"
-          id="calculationDate"
-          name="calculationDate"
-          value={dateForCalculation}
-          onChange={handleDateChange}
-        />
+        </Table>
       </div>
-      <DeficitCalculator dateForCalculation={dateForCalculation} />
-    </div>
-      </div>
-      {isModalOpen && (
-        <div className="modal">
-          <div className="modal-content">
-            <span className="close" onClick={handleModalClose}>&times;</span>
-            <h2>Обновление заказа</h2>
-            <form onSubmit={handleModalSubmit}>
+      <Modal show={isModalOpen} onHide={handleModalClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Создать заказ</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <form onSubmit={handleSubmit}>
+            <div>
+              <label htmlFor="Description">Описание:</label>
+              <input
+                type="text"
+                id="Description"
+                name="Description"
+                value={formData.Description}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="Date">Дата заказа:</label>
+              <input
+                type="date"
+                id="Date"
+                name="Date"
+                value={formData.Date}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <Button variant="primary" onClick={() => setShowProductSelection(true)}>
+              Выбрать составляющее заказа
+            </Button>
+            {showProductSelection && (
               <div>
-                <label htmlFor="Id">ID заказа:</label>
-                <input
-                  type="number"
-                  id="Id"
-                  name="Id"
-                  value={selectedOrder.Id}
-                  onChange={handleChange}
-                  required
-                  disabled
-                />
+                <h3>Выберите продукты</h3>
+                {products.map(product => (
+                  <div key={product.Id}>
+                    <label>{product.Name}</label>
+                    <input
+                      type="number"
+                      min="1"
+                      onChange={(e) =>
+                        handleProductSelectChange(product.Id, parseInt(e.target.value))
+                      }
+                    />
+                  </div>
+                ))}
               </div>
-              <div>
-                <label htmlFor="SpecificationId">SpecificationId:</label>
-                <input
-                  type="number"
-                  id="SpecificationId"
-                  name="SpecificationId"
-                  value={formData.SpecificationId}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="Orderdate">Дата заказа:</label>
-                <input
-                  type="date"
-                  id="Orderdate"
-                  name="Orderdate"
-                  value={formData.Orderdate}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="ClientName">Имя клиента:</label>
-                <input
-                  type="text"
-                  id="ClientName"
-                  name="ClientName"
-                  value={formData.ClientName}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="Count">Количество:</label>
-                <input
-                  type="number"
-                  id="Count"
-                  name="Count"
-                  value={formData.Count}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="Status">Статус:</label>
-                <input
-                  type="text"
-                  id="Status"
-                  name="Status"
-                  value={formData.Status}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <button type="submit">Сохранить</button>
-            </form>
-          </div>
-        </div>
-      )}
-      <h2>Разложенные заказы</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>ID спецификации</th>
-            <th>Описание</th>
-            <th>Единица измерения</th>
-            <th>Общее количество</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orderBreakdown.map(item => (
-            <tr key={item.Id}>
-              <td>{item.Id}</td>
-              <td>{item.Description1}</td>
-              <td>{item.Measure}</td>
-              <td>{item.TotalQuantity1}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+            )}
+            <button type="submit">Создать</button>
+          </form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleModalClose}>
+            Закрыть
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={isItemModalOpen} onHide={handleItemModalClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Содержимое заказа</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Table>
+            <thead>
+              <tr>
+                <th>Наименование продукта</th>
+                <th>Количество</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orderItems.map(item => (
+                <tr key={item.ProductId}>
+                  <td>{products.find(p => p.Id === item.ProductId)?.Name}</td>
+                  <td>{item.Count}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleItemModalClose}>
+            Закрыть
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

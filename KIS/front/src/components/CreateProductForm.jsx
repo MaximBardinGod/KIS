@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const CreateSpecificationForm = () => {
+const CreateProductForm = () => {
   const [formData, setFormData] = useState({
     ParentId: '',
-    Description: '',
+    Name: '',
     QuantityPerParent: '',
-    Measure: ''
+    Measure: '',
+    Calories: ''
   });
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,10 +24,10 @@ const CreateSpecificationForm = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await axios.post('http://localhost:5000/post/specifications', formData);
-      console.log('Specification created successfully!');
+      await axios.post('http://localhost:5000/post/Product', formData);
+      console.log('Product created successfully!');
     } catch (error) {
-      console.error('Failed to create specification:', error);
+      console.error('Failed to create Product:', error);
     } finally {
       setIsSubmitting(false);
       setIsFormVisible(false);
@@ -35,7 +36,7 @@ const CreateSpecificationForm = () => {
 
   return (
     <div>
-      <button onClick={() => setIsFormVisible(true)}>Добавить спецификацию</button>
+      <button onClick={() => setIsFormVisible(true)}>Добавить продукт</button>
       {isFormVisible && (
         <form onSubmit={handleSubmit}>
           <label htmlFor="ParentId">ParentId:</label>
@@ -47,12 +48,12 @@ const CreateSpecificationForm = () => {
             onChange={handleChange}
             required
           />
-          <label htmlFor="Description">Description:</label>
+          <label htmlFor="Name">Name:</label>
           <input
             type="text"
-            id="Description"
-            name="Description"
-            value={formData.Description}
+            id="Name"
+            name="Name"
+            value={formData.Name}
             onChange={handleChange}
             required
           />
@@ -74,6 +75,15 @@ const CreateSpecificationForm = () => {
             onChange={handleChange}
             required
           />
+          <label htmlFor="Calories">Calories:</label>
+          <input
+            type="number"
+            id="Calories"
+            name="Calories"
+            value={formData.Calories}
+            onChange={handleChange}
+            required
+          />
           <button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Отправка...' : 'Отправить'}
           </button>
@@ -83,4 +93,4 @@ const CreateSpecificationForm = () => {
   );
 };
 
-export default CreateSpecificationForm;
+export default CreateProductForm;

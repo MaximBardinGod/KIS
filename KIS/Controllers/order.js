@@ -26,30 +26,31 @@ async function getOrderById(req, res) {
 }
 
 async function createOrder(req, res) {
-    const { SpecificationId, OrderDate, Status, ClientName, Count } = req.body;
+    const { Description, Date} = req.body;
     try {
-        console.log('Parameters:', SpecificationId, OrderDate, Status, ClientName, Count);
+        console.log('Parameters:', Description, Date);
         const conn = await connectToDatabase();
-        const sql = `INSERT INTO Order_ (SpecificationId, OrderDate, Status, ClientName, Count) VALUES (?, ?, ?, ?, ?)`;
-        conn.query(sql, [SpecificationId, OrderDate, Status, ClientName, Count], (err, result) => {
-            if (err) throw err;
-            res.send('Order created successfully!');
-            console.log('Order created successfully!');
+        const sql = 'INSERT INTO [Order_] (Description, Date) VALUES (?, ?)';
+        conn.query(sql, [Description, Date], (err, result) => {
+            if (err) {
+                console.error('Error executing query:', err);
+                throw err;
+            }
+            res.send('order created successfully!');
+            console.log('order created successfully!');
         });
     } catch (error) {
         res.status(500).send('Failed to create order: ' + error.message);
     }
 }
 
-
-
 async function updateOrder(req, res) {
-    const { Id, SpecificationId, Orderdate, Status, ClientName, Count } = req.body;
+    const { Id, Description, Date } = req.body;
     try {
-        console.log('Parameters:', Id, SpecificationId, Orderdate, Status, ClientName, Count);
+        console.log('Parameters:', Id, Description, Date);
         const conn = await connectToDatabase();
-        const sql = `UPDATE Order_ SET SpecificationId = ?, Orderdate = ?, Status = ?, ClientName = ?, Count = ? WHERE Id = ?`;
-        conn.query(sql, [SpecificationId, Orderdate, Status, ClientName, Count, Id], (err, result) => {
+        const sql = `UPDATE Order_ SET Description = ?, Date = ?, WHERE Id = ?`;
+        conn.query(sql, [Description, Date, Id], (err, result) => {
             if (err) {
                 console.error('Failed to execute SQL query:', err);
                 return res.status(500).send('Failed to update order');

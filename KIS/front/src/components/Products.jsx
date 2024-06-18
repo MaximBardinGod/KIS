@@ -1,29 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import CreateSpecificationForm from './CreateSpecificationForm';
+import CreateProductForm from './CreateProductForm';
 import BreakdownModal from './BreakdownModal';
+import Table from 'react-bootstrap/Table'
 
-const Specifications = () => {
-  const [specifications, setSpecifications] = useState([]);
+const Product = () => {
+  const [Product, setProduct] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedSpecification, setSelectedSpecification] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBreakdownModalOpen, setIsBreakdownModalOpen] = useState(false);  
   const [breakdownData, setBreakdownData] = useState([]);
 
   const [formData, setFormData] = useState({
     ParentId: '',
-    Description: '',
+    Name: '',
     QuantityPerParent: '',
-    Measure: ''
+    Measure: '',
+    Calories:''
   });
 
   useEffect(() => {
-    const fetchSpecifications = async () => {
+    const fetchProduct = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/get/specifications');
-        setSpecifications(response.data);
+        const response = await axios.get('http://localhost:5000/get/Products');
+        setProduct(response.data);
       } catch (error) {
         setError('Ошибка при получении данных: ' + error.message);
       } finally {
@@ -31,31 +33,32 @@ const Specifications = () => {
       }
     };
 
-    fetchSpecifications();
+    fetchProduct();
   }, []);
 
-  const handleDeleteSpecification = async (id) => {
+  const handleDeleteProduct = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/delete/specifications/${id}`);
-      setSpecifications(specifications.filter(specification => specification.Id !== id));
+      await axios.delete(`http://localhost:5000/delete/Product/${id}`);
+      setProduct(Product.filter(Product => Product.Id !== id));
     } catch (error) {
-      setError('Ошибка при удалении спецификации: ' + error.message);
+      setError('Ошибка при удалении продукта: ' + error.message);
     }
   };
 
-  const handleUpdateSpecification = (specification) => {
-    setSelectedSpecification(specification);
+  const handleUpdateProduct = (Product) => {
+    setSelectedProduct(Product);
     setFormData({
-      ParentId: specification.ParentId,
-      Description: specification.Description,
-      QuantityPerParent: specification.QuantityPerParent,
-      Measure: specification.Measure
+      ParentId: Product.ParentId,
+      Name: Product.Name,
+      QuantityPerParent: Product.QuantityPerParent,
+      Measure: Product.Measure,
+      Calories: Product.Calories
     });
     setIsModalOpen(true);
   };
 
   const handleModalClose = () => {
-    setSelectedSpecification(null);
+    setSelectedProduct(null);
     setIsModalOpen(false);
   };
 
@@ -67,24 +70,25 @@ const Specifications = () => {
     e.preventDefault();
     try {
       const data = {
-        Id: selectedSpecification.Id,
+        Id: selectedProduct.Id,
         ParentId: formData.ParentId,
-        Description: formData.Description,
+        Name: formData.Name,
         QuantityPerParent: formData.QuantityPerParent,
-        Measure: formData.Measure
+        Measure: formData.Measure,
+        Calories: formData.Calories
       };
       console.log('Sending data:', data);
-      await axios.put('http://localhost:5000/put/specifications', data);
-      const updatedSpecifications = specifications.map(specification => {
-        if (specification.Id === selectedSpecification.Id) {
-          return { ...specification, ...formData };
+      await axios.put('http://localhost:5000/put/Product', data);
+      const updatedProduct = Product.map(Product => {
+        if (Product.Id === selectedProduct.Id) {
+          return { ...Product, ...formData };
         }
-        return specification;
+        return Product;
       });
-      setSpecifications(updatedSpecifications);
+      setProduct(updatedProduct);
       setIsModalOpen(false);
     } catch (error) {
-      setError('Ошибка при обновлении спецификации: ' + error.message);
+      setError('Ошибка при обновлении продукта: ' + error.message);
     }
   };
 
@@ -98,11 +102,11 @@ const Specifications = () => {
 
   const handleBreakdown = async (id) => {
     try {
-      const response = await axios.get(`http://localhost:5000/get/specificationBreakdown/${id}`);
+      const response = await axios.get(`http://localhost:5000/get/ProductBreakdown/${id}`);
       setBreakdownData(response.data);
       setIsBreakdownModalOpen(true);
     } catch (error) {
-      setError('Ошибка при разложении спецификации: ' + error.message);
+      setError('Ошибка при разложении продукта: ' + error.message);
     }
   };
 
@@ -110,44 +114,45 @@ const Specifications = () => {
 
   return (
     <div>
-      <h1>Спецификации</h1>
+      <h1>Продукты</h1>
       {error && <p className="error">{error}</p>}
       <div>
-        <table>
+        <Table>
           <thead>
             <tr>
               <th>ID</th>
-              <th>Parent ID</th>
-              <th>Description</th>
-              <th>Quantity Per Parent</th>
-              <th>Measure</th>
-              <th>Actions</th>
+              <th>ID родителя</th>
+              <th>Название</th>
+              <th>Количество на родителя</th>
+              <th>Количество</th>
+              <th>Калории</th>
+              <th>Действия</th>
             </tr>
           </thead>
           <tbody>
-            {specifications.map(specification => (
-              <tr key={specification.Id}>
-                <td>{specification.Id}</td>
-                <td>{specification.ParentId}</td>
-                <td>{specification.Description}</td>
-                <td>{specification.QuantityPerParent}</td>
-                <td>{specification.Measure}</td>
+            {Product.map(Product => (
+              <tr key={Product.Id}>
+                <td>{Product.Id}</td>
+                <td>{Product.ParentId}</td>
+                <td>{Product.Name}</td>
+                <td>{Product.QuantityPerParent}</td>
+                <td>{Product.Measure}</td>
+                <td>{Product.Calories}</td>
                 <td>
-                  <button onClick={() => handleDeleteSpecification(specification.Id)}>Удалить</button>
-                  <button onClick={() => handleUpdateSpecification(specification)}>Обновить</button>
-                  <button onClick={() => handleBreakdown(specification.Id)}>Разложить</button>
+                  <button onClick={() => handleDeleteProduct(Product.Id)}>Удалить</button>
+                  <button onClick={() => handleUpdateProduct(Product)}>Обновить</button>
                 </td>
               </tr>
             ))}
           </tbody>
-        </table>
-        <CreateSpecificationForm />
+        </Table>
+        <CreateProductForm />
       </div>
       {isModalOpen && (
         <div className="modal">
           <div className="modal-content">
             <span className="close" onClick={handleModalClose}>&times;</span>
-            <h2>Обновление спецификации</h2>
+            <h2>Обновление продукта</h2>
             <form onSubmit={handleModalSubmit}>
               <div>
                 <label htmlFor="ParentId">ParentId:</label>
@@ -161,12 +166,12 @@ const Specifications = () => {
                 />
               </div>
               <div>
-                <label htmlFor="Description">Description:</label>
+                <label htmlFor="Name">Name:</label>
                 <input
                   type="text"
-                  id="Description"
-                  name="Description"
-                  value={formData.Description}
+                  id="Name"
+                  name="Name"
+                  value={formData.Name}
                   onChange={handleChange}
                   required
                 />
@@ -193,6 +198,17 @@ const Specifications = () => {
                   required
                 />
               </div>
+              <div>
+                <label htmlFor="Calories">Calories:</label>
+                <input
+                  type="number"
+                  id="Calories"
+                  name="Calories"
+                  value={formData.Calories}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
               <button type="submit">Сохранить</button>
             </form>
           </div>
@@ -208,4 +224,4 @@ const Specifications = () => {
   );
 };
 
-export default Specifications;
+export default Product;

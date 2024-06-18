@@ -2,8 +2,11 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Orders from './components/Orders';
-import Specifications from './components/Specifications';
-import Stock from './components/Stock';
+import Product from './components/Products';
+import Check from './components/Check';
+import Client from './components/Client';
+import ServeClient from './components/ServeClient';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const App = () => {
   return (
@@ -11,8 +14,10 @@ const App = () => {
       <Navbar />
       <Routes>
         <Route path="/orders" element={<Orders />} />
-        <Route path="/specifications" element={<Specifications />} />
-        <Route path="/stock" element={<Stock />} />
+        <Route path="/product" element={<Product />} />
+        <Route path="/check" element={<Check />} />
+        <Route path="/client" element={<Client />} />
+        <Route path="/serve-client" element={<ServeClient />} />
       </Routes>
     </Router>
   );
