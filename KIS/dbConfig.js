@@ -1,21 +1,26 @@
-const sql = require('msnodesqlv8');
+const { Pool } = require('pg');
 
-const connectionString = "server=DESKTOP-DA7Q1OV;Database=ISKURSACH;trusted_connection=yes;driver={SQL Server Native Client 11.0}";
+const pool = new Pool({
+    user: 'postgres',
+    host: 'localhost',
+    database: 'gurmanika',
+    password: 'rootroot',
+    port: 5432
+});
 
-function connectToDatabase() {
-    return new Promise((resolve, reject) => {
-        sql.open(connectionString, (err, conn) => {
-            if (err) {
-                console.error('Не удалось подключится к БД! Ошбика:', err);
-                return reject(err);
-            }
-            console.log('Подключение к БД...');
-            resolve(conn);
-            
-        });
-    });
+async function connectToDatabase() {
+    try {
+        const client = await pool.connect();
+        console.log('Подключение к БД установлено успешно!');
+        return client;
+    } catch (err) {
+        console.error('Не удалось подключиться к БД! Ошибка:', err);
+        throw err;
+    }
 }
 
+
 module.exports = {
-    connectToDatabase
+    connectToDatabase,
+    pool
 };

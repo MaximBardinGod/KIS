@@ -15,15 +15,15 @@ const Check = () => {
   const [itemMenu, setItemMenu] = useState([]);
 
   const [formData, setFormData] = useState({
-    Sum: '',
-    Date: '',
-    PaymentType: ''
+    sum: '',
+    date: '',
+    paymenttype: ''
   });
 
   useEffect(() => {
     const fetchChecks = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/get/Checks');
+        const response = await axios.get('http://localhost:5000/get/checks');
         setChecks(response.data);
       } catch (error) {
         setError('Ошибка при получении данных: ' + error.message);
@@ -34,7 +34,7 @@ const Check = () => {
 
     const fetchClients = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/get/Clients');
+        const response = await axios.get('http://localhost:5000/get/clients');
         setClients(response.data);
       } catch (error) {
         setError('Ошибка при получении данных о клиентах: ' + error.message);
@@ -43,7 +43,7 @@ const Check = () => {
 
     const fetchProducts = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/get/Products');
+        const response = await axios.get('http://localhost:5000/get/products');
         setProducts(response.data);
       } catch (error) {
         setError('Ошибка при получении данных о продуктах: ' + error.message);
@@ -57,8 +57,8 @@ const Check = () => {
 
   const handleDeleteCheck = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/delete/Check/${id}`);
-      setChecks(checks.filter(check => check.Id !== id));
+      await axios.delete(`http://localhost:5000/delete/check/${id}`);
+      setChecks(checks.filter(check => check.id !== id));
     } catch (error) {
       setError('Ошибка при удалении записи: ' + error.message);
     }
@@ -67,9 +67,9 @@ const Check = () => {
   const handleUpdateCheck = (check) => {
     setSelectedCheck(check);
     setFormData({
-      Sum: check.Sum,
-      Date: new Date(check.Date).toISOString().split('T')[0],
-      PaymentType: check.PaymentType
+      sum: check.sum,
+      date: new Date(check.date).toISOString().split('T')[0],
+      paymenttype: check.paymenttype
     });
     setIsModalOpen(true);
   };
@@ -83,14 +83,14 @@ const Check = () => {
     e.preventDefault();
     try {
       const data = {
-        Id: selectedCheck.Id,
-        Sum: formData.Sum,
-        Date: formData.Date,
-        PaymentType: formData.PaymentType
+        id: selectedCheck.id,
+        sum: formData.sum,
+        date: formData.date,
+        paymenttype: formData.paymenttype
       };
-      await axios.put('http://localhost:5000/put/Check', data);
+      await axios.put('http://localhost:5000/put/check', data);
       const updatedChecks = checks.map(check => {
-        if (check.Id === selectedCheck.Id) {
+        if (check.id === selectedCheck.id) {
           return { ...check, ...formData };
         }
         return check;
@@ -115,7 +115,7 @@ const Check = () => {
       const response = await axios.get(`http://localhost:5000/get/itemmenu/${checkId}`);
       const itemMenuData = response.data.map(item => ({
         ...item,
-        ProductName: products.find(p => p.Id === item.ProductId)?.Name || 'Неизвестный продукт'
+        productname: products.find(p => p.id === item.productid)?.name || 'Неизвестный продукт'
       }));
       setItemMenu(itemMenuData);
       setIsModalOpen(true);
@@ -144,17 +144,17 @@ const Check = () => {
           </thead>
           <tbody>
             {checks.map(check => {
-              const client = clients.find(c => c.Id === check.ClientId);
+              const client = clients.find(c => c.id === check.clientid);
               return (
-                <tr key={check.Id}>
-                  <td>{check.Id}</td>
-                  <td>{client ? client.Name : 'Клиент не найден'}</td>
-                  <td>{check.Sum}</td>
-                  <td>{new Date(check.Date).toLocaleDateString()}</td>
-                  <td>{check.PaymentType}</td>
+                <tr key={check.id}>
+                  <td>{check.id}</td>
+                  <td>{client ? client.name : 'Клиент не найден'}</td>
+                  <td>{check.sum}</td>
+                  <td>{new Date(check.date).toLocaleDateString()}</td>
+                  <td>{check.paymenttype}</td>
                   <td>
-                    <button onClick={() => handleDeleteCheck(check.Id)}>Удалить</button>
-                    <button onClick={() => handleViewContents(check.Id)}>Посмотреть содержимое</button>
+                    <button onClick={() => handleDeleteCheck(check.id)}>Удалить</button>
+                    <button onClick={() => handleViewContents(check.id)}>Посмотреть содержимое</button>
                   </td>
                 </tr>
               );
@@ -178,9 +178,9 @@ const Check = () => {
                 </thead>
                 <tbody>
                   {itemMenu.map(item => (
-                    <tr key={item.Id}>
-                      <td>{item.ProductName}</td>
-                      <td>{item.Count}</td>
+                    <tr key={item.id}>
+                      <td>{item.productname}</td>
+                      <td>{item.count}</td>
                     </tr>
                   ))}
                 </tbody>

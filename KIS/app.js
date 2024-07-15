@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const bodyParser = require('body-parser');
+
 const { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct} = require('./Controllers/product');
 const { getAllOrders, getOrderById, createOrder, updateOrder, deleteOrder} = require('./Controllers/order');
 const { getAllChecks, getCheckById, createCheck, updateCheck, deleteCheck} = require('./Controllers/check');
@@ -10,8 +12,7 @@ const { getAllClients,
     deleteClient} = require('./Controllers/client');
 const { getItemMenuByCheckId, createItemMenu} = require('./Controllers/itemMenu');
 const { getItemOrderByOrderId, createItemOrder} = require('./Controllers/itemOrder');
-//const { getProductBreakdown } = require('./Controllers/ProductBreakdown');
-
+const ordersRouter = require('./Controllers/createClientOrder');
 
 const app = express();
 const port = 5000;
@@ -49,6 +50,19 @@ app.post('/post/itemmenu', createItemMenu);
 app.get('/get/itemorder/:orderId', getItemOrderByOrderId);
 app.post('/post/itemOrder', createItemOrder);
 
+app.use(bodyParser.json());
+
+app.get('/test-db', async (req, res) => {
+    try {
+      const result = await pool.query('SELECT NOW()');
+      res.send(result.rows[0]);
+    } catch (error) {
+      res.status(500).send('Database connection failed: ' + error.message);
+    }
+  });
+  
+
+app.use('/api/orders', ordersRouter);
 
 app.listen(port, () => {
     console.log(`Сервер запущен! Адрес сервера:http://localhost:${port}`);

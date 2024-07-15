@@ -1,16 +1,12 @@
-const { connectToDatabase } = require('../dbConfig');
+const { pool } = require('../dbConfig');
 
 async function getAllChecks(req, res) {
     try {
-        const conn = await connectToDatabase();
-        conn.query('SELECT * FROM [Check_]', (err, results) => {
-            if (err) {
-                console.error('Error executing query:', err);
-                throw err;
-            }
-            res.json(results);
-        });
+        const client = await pool.connect();
+        const result = await client.query('SELECT * FROM check_');
+        res.json(result.rows);
     } catch (error) {
+        console.error('Error executing query:', error);
         res.status(500).send('Failed to retrieve data: ' + error.message);
     }
 }
@@ -18,144 +14,105 @@ async function getAllChecks(req, res) {
 async function getCheckById(req, res) {
     const id = req.params.id;
     try {
-        const conn = await connectToDatabase();
-        conn.query('SELECT * FROM [Check_] WHERE Id = ?', [id], (err, results) => {
-            if (err) {
-                console.error('Error executing query:', err);
-                throw err;
-            }
-            res.json(results[0] || {});
-        });
+        const client = await pool.connect();
+        const result = await client.query('SELECT * FROM check_ WHERE id = $1', [id]);
+        res.json(result.rows[0] || {});
     } catch (error) {
+        console.error('Error executing query:', error);
         res.status(500).send('Failed to retrieve data: ' + error.message);
     }
 }
 
 async function createCheck(req, res) {
-  const { Sum, Date, PaymentType, ClientId } = req.body;
-  try {
-      const conn = await connectToDatabase();
+    const { sum, date, paymentType, clientId } = req.body;
+    try {
+        const client = await pool.connect();
 
-      // Start a transaction
-      conn.beginTransaction(async err => {
-          if (err) throw err;
+        try {
+            await client.query('BEGIN');
 
-          const sql = `INSERT INTO Check_ (Sum, Date, PaymentType, ClientId) VALUES (?, ?, ?, ?)`;
-          conn.query(sql, [Sum, Date, PaymentType, ClientId], async (err, result) => {
-              if (err) {
-                  return conn.rollback(() => {
-                      throw err;
-                  });
-              }
+            const insertCheckText = `INSERT INTO check_ (sum, date, paymentType, clientId) VALUES ($1, $2, $3, $4) RETURNING id`;
+            const insertCheckValues = [sum, date, paymentType, clientId];
+            const result = await client.query(insertCheckText, insertCheckValues);
 
-              // Calculate Bonus
-              const bonus = Math.round(Sum * 0.01);
+            const checkId = result.rows[0].id;
 
-              // Update Client's MoneySpend
-              const updateClientSql = `UPDATE Client SET MoneySpend = MoneySpend + ? WHERE Id = ?`;
-              conn.query(updateClientSql, [Sum, ClientId], async (err, result) => {
-                  if (err) {
-                      return conn.rollback(() => {
-                          throw err;
-                      });
-                  }
+            // Calculate Bonus
+            const bonus = Math.round(sum * 0.01);
 
-                  // Update Client's Bonus
-                  const updateClientBonusSql = `UPDATE Client SET Bonus = Bonus + ? WHERE Id = ?`;
-                  conn.query(updateClientBonusSql, [bonus, ClientId], async (err, result) => {
-                      if (err) {
-                          return conn.rollback(() => {
-                              throw err;
-                          });
-                      }
+            // Update Client's MoneySpend
+            const updateClientMoneySpendText = `UPDATE client SET moneySpend = moneySpend + $1 WHERE id = $2`;
+            await client.query(updateClientMoneySpendText, [sum, clientId]);
 
-                      conn.commit(err => {
-                          if (err) {
-                              return conn.rollback(() => {
-                                  throw err;
-                              });
-                          }
-                          res.send('Check created, Client MoneySpend updated, and Bonus updated successfully!');
-                      });
-                  });
-              });
-          });
-      });
-  } catch (error) {
-      res.status(500).send('Failed to create Check: ' + error.message);
-  }
+            // Update Client's Bonus
+            const updateClientBonusText = `UPDATE client SET bonus = bonus + $1 WHERE id = $2`;
+            await client.query(updateClientBonusText, [bonus, clientId]);
+
+            await client.query('COMMIT');
+
+            res.send('Check created, Client MoneySpend updated, and Bonus updated successfully!');
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    } catch (error) {
+        console.error('Failed to create Check:', error);
+        res.status(500).send('Failed to create Check: ' + error.message);
+    }
 }
 
-
 async function updateCheck(req, res) {
-    const { Id, Sum, Date, PaymentType, ClientId } = req.body;
+    const { id, sum, date, paymentType, clientId } = req.body;
     try {
-        const conn = await connectToDatabase();
-        const sql = `UPDATE Check_ SET Sum = ?, Date = ?, PaymentType = ?, ClientId = ? WHERE Id = ?`;
-        conn.query(sql, [Sum, Date, PaymentType, ClientId, Id], (err, result) => {
-            if (err) {
-                console.error('Failed to execute SQL query:', err);
-                return res.status(500).send('Failed to update Check');
-            }
-            return res.send('Check updated successfully!');
-        });
+        const client = await pool.connect();
+        const sql = `UPDATE check_ SET sum = $1, date = $2, paymentType = $3, clientId = $4 WHERE id = $5`;
+        await client.query(sql, [sum, date, paymentType, clientId, id]);
+        res.send('Check updated successfully!');
     } catch (error) {
-        console.error('Error:', error);
-        return res.status(500).send('Failed to update Check');
+        console.error('Failed to update Check:', error);
+        res.status(500).send('Failed to update Check: ' + error.message);
     }
 }
 
 async function deleteCheck(req, res) {
-    const { id } = req.params;
+    const id = req.params.id;
     try {
-        const conn = await connectToDatabase();
+        const client = await pool.connect();
 
-        // Retrieve the check to get the Sum and ClientId before deletion
-        conn.query('SELECT Sum, ClientId FROM [Check_] WHERE Id = ?', [id], (err, results) => {
-            if (err) throw err;
+        try {
+            await client.query('BEGIN');
 
-            if (results.length === 0) {
+            // Retrieve the check to get the sum and clientId before deletion
+            const selectCheckText = 'SELECT sum, clientId FROM check_ WHERE id = $1';
+            const selectCheckResult = await client.query(selectCheckText, [id]);
+
+            if (selectCheckResult.rows.length === 0) {
                 return res.status(404).send('Check not found');
             }
 
-            const { Sum, ClientId } = results[0];
+            const { sum, clientId } = selectCheckResult.rows[0];
 
-            // Start a transaction
-            conn.beginTransaction(err => {
-                if (err) throw err;
+            const deleteCheckText = 'DELETE FROM check_ WHERE id = $1';
+            await client.query(deleteCheckText, [id]);
 
-                const sql = 'DELETE FROM [Check_] WHERE Id = ?';
-                conn.query(sql, [id], (err, result) => {
-                    if (err) {
-                        return conn.rollback(() => {
-                            throw err;
-                        });
-                    }
+            // Update Client's MoneySpend
+            const updateClientMoneySpendText = `UPDATE client SET moneySpend = moneySpend - $1 WHERE id = $2`;
+            await client.query(updateClientMoneySpendText, [sum, clientId]);
 
-                    // Update Client's MoneySpend
-                    const updateClientSql = `UPDATE Client SET MoneySpend = MoneySpend - ? WHERE Id = ?`;
-                    conn.query(updateClientSql, [Sum, ClientId], (err, result) => {
-                        if (err) {
-                            return conn.rollback(() => {
-                                throw err;
-                            });
-                        }
+            await client.query('COMMIT');
 
-                        // Commit the transaction
-                        conn.commit(err => {
-                            if (err) {
-                                return conn.rollback(() => {
-                                    throw err;
-                                });
-                            }
-                            res.send('Check deleted and Client MoneySpend updated successfully!');
-                        });
-                    });
-                });
-            });
-        });
+            res.send('Check deleted and Client MoneySpend updated successfully!');
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
     } catch (error) {
-        res.status(500).send('Failed to delete data: ' + error.message);
+        console.error('Failed to delete Check:', error);
+        res.status(500).send('Failed to delete Check: ' + error.message);
     }
 }
 

@@ -12,10 +12,10 @@ const Client = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [formData, setFormData] = useState({
-    Name: '',
-    PhoneNumber: '',
-    Bonus: '',
-    MoneySpend: ''
+    name: '',
+    phonenumber: '',
+    bonus: '',
+    moneyspend: ''
   });
 
   useEffect(() => {
@@ -36,7 +36,7 @@ const Client = () => {
   const handleDeleteClient = async (id) => {
     try {
       await axios.delete(`http://localhost:5000/delete/client/${id}`);
-      setClients(clients.filter(client => client.Id !== id));
+      setClients(clients.filter(client => client.id !== id));
     } catch (error) {
       setError('Ошибка при удалении клиента: ' + error.message);
     }
@@ -45,10 +45,10 @@ const Client = () => {
   const handleUpdateClient = (client) => {
     setSelectedClient(client);
     setFormData({
-      Name: client.Name,
-      PhoneNumber: client.PhoneNumber,
-      Bonus: client.Bonus,
-      MoneySpend: client.MoneySpend
+      name: client.name,
+      phonenumber: client.phonenumber,
+      bonus: client.bonus,
+      moneyspend: client.moneyspend
     });
     setIsModalOpen(true);
   };
@@ -56,10 +56,10 @@ const Client = () => {
   const handleCreateClient = () => {
     setSelectedClient(null);
     setFormData({
-      Name: '',
-      PhoneNumber: '',
-      Bonus: '',
-      MoneySpend: ''
+      name: '',
+      phonenumber: '',
+      bonus: '',
+      moneyspend: ''
     });
     setIsModalOpen(true);
   };
@@ -73,7 +73,7 @@ const Client = () => {
     e.preventDefault();
     try {
       if (selectedClient) {
-        await axios.put(`http://localhost:5000/put/client/${selectedClient.Id}`, formData);
+        await axios.put(`http://localhost:5000/put/client/${selectedClient.id}`, formData);
       } else {
         await axios.post('http://localhost:5000/post/client', formData);
       }
@@ -112,14 +112,14 @@ const Client = () => {
           </thead>
           <tbody>
             {clients.map(client => (
-              <tr key={client.Id}>
-                <td>{client.Id}</td>
-                <td>{client.Name}</td>
-                <td>{client.PhoneNumber}</td>
-                <td>{client.Bonus}</td>
-                <td>{client.MoneySpend}</td>
+              <tr key={client.id}>
+                <td>{client.id}</td>
+                <td>{client.name}</td>
+                <td>{client.phonenumber}</td>
+                <td>{client.bonus}</td>
+                <td>{client.moneyspend}</td>
                 <td>
-                  <button onClick={() => handleDeleteClient(client.Id)}>Удалить</button>
+                  <button onClick={() => handleDeleteClient(client.id)}>Удалить</button>
                   <button onClick={() => handleUpdateClient(client)}>Обновить</button>
                 </td>
               </tr>
@@ -135,45 +135,45 @@ const Client = () => {
         <Modal.Body>
           <form onSubmit={handleModalSubmit}>
             <div>
-              <label htmlFor="Name">Имя:</label>
+              <label htmlFor="name">Имя:</label>
               <input
                 type="text"
-                id="Name"
-                name="Name"
-                value={formData.Name}
+                id="name"
+                name="name"
+                value={formData.name}
                 onChange={handleChange}
                 required
               />
             </div>
             <div>
-              <label htmlFor="PhoneNumber">Номер телефона:</label>
+              <label htmlFor="phonenumber">Номер телефона:</label>
               <input
                 type="text"
-                id="PhoneNumber"
-                name="PhoneNumber"
-                value={formData.PhoneNumber}
+                id="phonenumber"
+                name="phonenumber"
+                value={formData.phoneNumber}
                 onChange={handleChange}
                 required
               />
             </div>
             <div>
-              <label htmlFor="Bonus">Бонус:</label>
+              <label htmlFor="bonus">Бонус:</label>
               <input
                 type="number"
-                id="Bonus"
-                name="Bonus"
-                value={formData.Bonus}
+                id="bonus"
+                name="bonus"
+                value={formData.bonus}
                 onChange={handleChange}
                 required
               />
             </div>
             <div>
-              <label htmlFor="MoneySpend">Потраченные деньги:</label>
+              <label htmlFor="moneyspend">Потраченные деньги:</label>
               <input
                 type="number"
-                id="MoneySpend"
-                name="MoneySpend"
-                value={formData.MoneySpend}
+                id="moneyspend"
+                name="moneyspend"
+                value={formData.moneyspend}
                 onChange={handleChange}
                 required
               />

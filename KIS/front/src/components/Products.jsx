@@ -1,31 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import CreateProductForm from './CreateProductForm';
-import BreakdownModal from './BreakdownModal';
-import Table from 'react-bootstrap/Table'
+import Table from 'react-bootstrap/Table';
 
 const Product = () => {
-  const [Product, setProduct] = useState([]);
+  const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isBreakdownModalOpen, setIsBreakdownModalOpen] = useState(false);  
-  const [breakdownData, setBreakdownData] = useState([]);
 
   const [formData, setFormData] = useState({
-    ParentId: '',
-    Name: '',
-    QuantityPerParent: '',
-    Measure: '',
-    Calories:''
+    name: '',
+    type: '',
+    linktopicture: '',
+    description: '',
+    price: '',
+    compound: '',
+    calories: ''
   });
 
   useEffect(() => {
-    const fetchProduct = async () => {
+    const fetchProducts = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/get/Products');
-        setProduct(response.data);
+        const response = await axios.get('http://localhost:5000/get/products');
+        setProducts(response.data); // Assuming response.data is an array
       } catch (error) {
         setError('Ошибка при получении данных: ' + error.message);
       } finally {
@@ -33,26 +32,28 @@ const Product = () => {
       }
     };
 
-    fetchProduct();
+    fetchProducts();
   }, []);
 
   const handleDeleteProduct = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/delete/Product/${id}`);
-      setProduct(Product.filter(Product => Product.Id !== id));
+      await axios.delete(`http://localhost:5000/delete/product/${id}`);
+      setProducts(products.filter(product => product.id !== id));
     } catch (error) {
       setError('Ошибка при удалении продукта: ' + error.message);
     }
   };
 
-  const handleUpdateProduct = (Product) => {
-    setSelectedProduct(Product);
+  const handleUpdateProduct = (product) => {
+    setSelectedProduct(product);
     setFormData({
-      ParentId: Product.ParentId,
-      Name: Product.Name,
-      QuantityPerParent: Product.QuantityPerParent,
-      Measure: Product.Measure,
-      Calories: Product.Calories
+      name: product.name,
+      type: product.type,
+      linktopicture: product.linktopicture,
+      description: product.description,
+      price: product.price,
+      compound: product.compound,
+      calories: product.calories
     });
     setIsModalOpen(true);
   };
@@ -62,30 +63,27 @@ const Product = () => {
     setIsModalOpen(false);
   };
 
-  const handleBreakdownModalClose = () => {
-    setIsBreakdownModalOpen(false);
-  };
-
   const handleModalSubmit = async (e) => {
-    e.preventDefault();
     try {
       const data = {
-        Id: selectedProduct.Id,
-        ParentId: formData.ParentId,
-        Name: formData.Name,
-        QuantityPerParent: formData.QuantityPerParent,
-        Measure: formData.Measure,
-        Calories: formData.Calories
+        id: selectedProduct.id,
+        name: formData.name,
+        type: formData.type,
+        linktopicture: formData.linktopicture,
+        description: formData.description,
+        price: formData.price,
+        compound: formData.compound,
+        calories: formData.calories
       };
       console.log('Sending data:', data);
-      await axios.put('http://localhost:5000/put/Product', data);
-      const updatedProduct = Product.map(Product => {
-        if (Product.Id === selectedProduct.Id) {
-          return { ...Product, ...formData };
+      await axios.put('http://localhost:5000/put/product', data);
+      const updatedProducts = products.map(product => {
+        if (product.id === selectedProduct.id) {
+          return { ...product, ...formData };
         }
-        return Product;
+        return product;
       });
-      setProduct(updatedProduct);
+      setProducts(updatedProducts);
       setIsModalOpen(false);
     } catch (error) {
       setError('Ошибка при обновлении продукта: ' + error.message);
@@ -100,16 +98,6 @@ const Product = () => {
     }));
   };
 
-  const handleBreakdown = async (id) => {
-    try {
-      const response = await axios.get(`http://localhost:5000/get/ProductBreakdown/${id}`);
-      setBreakdownData(response.data);
-      setIsBreakdownModalOpen(true);
-    } catch (error) {
-      setError('Ошибка при разложении продукта: ' + error.message);
-    }
-  };
-
   if (isLoading) return <div>Загрузка...</div>;
 
   return (
@@ -121,26 +109,30 @@ const Product = () => {
           <thead>
             <tr>
               <th>ID</th>
-              <th>ID родителя</th>
               <th>Название</th>
-              <th>Количество на родителя</th>
-              <th>Количество</th>
+              <th>Тип</th>
+              <th>Ссылка на картинку</th>
+              <th>Описание</th>
+              <th>Цена</th>
+              <th>Состав</th>
               <th>Калории</th>
               <th>Действия</th>
             </tr>
           </thead>
           <tbody>
-            {Product.map(Product => (
-              <tr key={Product.Id}>
-                <td>{Product.Id}</td>
-                <td>{Product.ParentId}</td>
-                <td>{Product.Name}</td>
-                <td>{Product.QuantityPerParent}</td>
-                <td>{Product.Measure}</td>
-                <td>{Product.Calories}</td>
+            {products.map(product => (
+              <tr key={product.id}>
+                <td>{product.id}</td>
+                <td>{product.name}</td>
+                <td>{product.type}</td>
+                <td>{product.linktopicture}</td>
+                <td>{product.description}</td>
+                <td>{product.price}</td>
+                <td>{product.compound}</td>
+                <td>{product.calories}</td>
                 <td>
-                  <button onClick={() => handleDeleteProduct(Product.Id)}>Удалить</button>
-                  <button onClick={() => handleUpdateProduct(Product)}>Обновить</button>
+                  <button onClick={() => handleDeleteProduct(product.id)}>Удалить</button>
+                  <button onClick={() => handleUpdateProduct(product)}>Обновить</button>
                 </td>
               </tr>
             ))}
@@ -155,56 +147,78 @@ const Product = () => {
             <h2>Обновление продукта</h2>
             <form onSubmit={handleModalSubmit}>
               <div>
-                <label htmlFor="ParentId">ParentId:</label>
-                <input
-                  type="number"
-                  id="ParentId"
-                  name="ParentId"
-                  value={formData.ParentId}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="Name">Name:</label>
+                <label htmlFor="name">Название:</label>
                 <input
                   type="text"
-                  id="Name"
-                  name="Name"
-                  value={formData.Name}
+                  id="name"
+                  name="name"
+                  value={formData.name}
                   onChange={handleChange}
                   required
                 />
               </div>
               <div>
-                <label htmlFor="QuantityPerParent">Quantity Per Parent:</label>
-                <input
-                  type="number"
-                  id="QuantityPerParent"
-                  name="QuantityPerParent"
-                  value={formData.QuantityPerParent}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="Measure">Measure:</label>
+                <label htmlFor="type">Тип:</label>
                 <input
                   type="text"
-                  id="Measure"
-                  name="Measure"
-                  value={formData.Measure}
+                  id="type"
+                  name="type"
+                  value={formData.type}
                   onChange={handleChange}
                   required
                 />
               </div>
               <div>
-                <label htmlFor="Calories">Calories:</label>
+                <label htmlFor="linktopicture">Ссылка на картинку:</label>
+                <input
+                  type="text"
+                  id="linktopicture"
+                  name="linktopicture"
+                  value={formData.linktopicture}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="description">Описание:</label>
+                <input
+                  type="text"
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="price">Цена:</label>
                 <input
                   type="number"
-                  id="Calories"
-                  name="Calories"
-                  value={formData.Calories}
+                  id="price"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="compound">Состав:</label>
+                <input
+                  type="text"
+                  id="compound"
+                  name="compound"
+                  value={formData.compound}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="calories">Калории:</label>
+                <input
+                  type="number"
+                  id="calories"
+                  name="calories"
+                  value={formData.calories}
                   onChange={handleChange}
                   required
                 />
@@ -213,12 +227,6 @@ const Product = () => {
             </form>
           </div>
         </div>
-      )}
-      {isBreakdownModalOpen && (
-        <BreakdownModal
-          breakdownData={breakdownData}
-          onClose={handleBreakdownModalClose}
-        />
       )}
     </div>
   );
